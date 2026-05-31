@@ -1,28 +1,37 @@
-from pydantic import BaseModel 
-from typing import Optional 
+import email
+from unicodedata import category
+from sqlalchemy import Column, Index, String , Integer , Float
+from database import Base
 
-class Book(BaseModel): 
-    id: int 
-    title: str
-    author: str 
-    category: str 
-    total_copies: int
-    available_copies: int
+class Book(Base): 
+      __tablename__= "books" 
 
-
-class Member(BaseModel): 
-    id: int
-    name: str
-    email: str
-    phone: str
-    membership_type: str
-
-class Borrow(BaseModel): 
-    id: int
-    book_id: int
-    member_id: int 
-    borrow_date: str 
-    return_date: Optional[str]=None 
-    status: str 
+      id = Column(Integer, primary_key=True, index=True)
+      title = Column(String, index=True)
+      author= Column(String)
+      category= Column (String, index=True)
+      total_copies=Column(Integer)
+      available_copies=Column(Integer)
 
 
+
+class Member(Base): 
+    __tablename__="members"
+    
+    id=Column(Integer, primary_key=True, index= True)
+    name=Column(String, index=True)
+    email = Column(String , unique=True, index=True)
+    phone= Column (String)
+    membership_type= Column (String)
+
+
+
+class Borrow(Base): 
+    __tablename__="borrows"
+ 
+    id= Column(Integer, primary_key=True, index=True)
+    book_id= Column(Integer, index=True)
+    member_id= Column (Integer, index=True)
+    borrow_date=Column(String)
+    return_date=Column(String, nullable=True)
+    status= Column(String)
