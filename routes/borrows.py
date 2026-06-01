@@ -1,9 +1,11 @@
-from optparse import Option
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 from typing import Optional
-from routes.books import book_list
-from routes.members import members_list 
-from fastapi import APIRouter , HTTPException
-from models import Borrow
+from database import get_db
+from routes.books import book_list           # purane in-memory list (abhi rakhna)
+from routes.members import members_list      # purane in-memory list (abhi rakhna)
+from models import Borrow                    # SQLAlchemy
+from schemas import Borrow as BorrowSchema   # Pydantic alias
 from datetime import date
 
 route= APIRouter(
@@ -14,7 +16,7 @@ route= APIRouter(
 borrow_list=[]
  
 @route.post("/", status_code=201)
-async def create_borrow(new_borrow: Borrow):
+async def create_borrow(new_borrow: BorrowSchema):
     # Step 1: Find book
     found_book = None
     for book in book_list:

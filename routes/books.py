@@ -1,6 +1,11 @@
 from typing import Optional
-from fastapi import APIRouter , HTTPException
+from unicodedata import category
+from fastapi import APIRouter , HTTPException, Depends 
+from sqlalchemy.orm import Session, query 
+from typing import Optional
+from database import get_db
 from models import Book
+from schemas import Book as BookSchema 
 
 
 route = APIRouter(
@@ -12,47 +17,59 @@ book_list =[]
 
 
 @route.post("/", status_code=201)
-async def create_book(new_book:Book):
-     book_list.append(new_book)
-     return {"message":" The Book is added successfully", "book":new_book}
-
+async def create_book(new_book:BookSchema,db:Session=Depends(get_db)):
+     book_db=Book(
+        title=new_book.title,
+        author=new_book.author,
+        category=new_book.category,
+        total_copies =new_book.total_copies,
+        available_copies= new_book.available_copies
+     )
+     db.add(book_db)
+     db.commit()
+     db.refresh(book_db)
+     return {"message":"Book added success fully", "book":book_db}
 
 @route.get("/")
-async def get_book(category : Optional[str]=None, available_only:bool= False):
-       filter_book=[]
-       for book in book_list:
-           if category is not None and book.category != category: 
-            continue
+async def get_book(category: Optional[str]=None,available_only:bool= False, db:Session=Depends(get_db)):
+    query=db.query(Book)
 
-           if available_only and book.available_copies <=0 : 
-            continue
+    if category is not None: 
+        query=query.filter(Book.category==category)
+    if available_only: 
+        query= query.filter(Book.available_copies > 0)
 
-           filter_book.append(book)
-        
-       return filter_book
-
+    return query.all()
 
 
 @route.get("/{book_id}")
-async def get_any_book(book_id: int): 
-    for book in book_list: 
-        if book.id ==  book_id : 
-            return {"message":"The Book is here", "book":book}
-    raise HTTPException (status_code=404,detail="Data is not found")
+async def get_any_book(book_id: int, db:Session=Depends(get_db)):
+       book=db.query(Book).filter(Book.id==book_id).first()
+       if book is None: 
+            raise HTTPException( status_code = 404, detail="Book not found")
+       return book
 
-@route.put("/{book_id}")
-async def update_book(book_id: int, update_book:Book): 
-    for index,book in enumerate(book_list): 
-      if book.id == book_id : 
-        book_list[index]=update_book 
-        return {"message":" The Book id is update successfully"}
-    raise HTTPException(status_code=404, detail="The data is not found")
+@route.put("/{book_id}") 
+async def update_book(book_id: int, update_book:BookSchema, db:Session=Depends(get_db)): 
+   book= db.query(Book).filter(Book.id==book_id).first()
 
+   if book is None : 
+        raise HTTPException(status_code=404, detail="The Book does not found")
+    
+   book.title= update_book.title
+   book.author= update_book.author
+   book.category= update_book.category
+   book.total_copies= update_book.total_copies
+   book.available_copies= update_book.available_copies
+   db.commit()
+   db.refresh(book)
+   return {"message":"The Book is update","book":book}
 
 @route.delete("/{book_id}")
-async def delete_book(book_id : int): 
-    for index , book in enumerate (book_list): 
-        if book.id == book_id: 
-            book_list.pop(index)
-            return {"message": "Data is deleted successfully"}
-    raise HTTPException(status_code=404, detail="The data is not found ")
+async def delete_book(book_id : int, db:Session=Depends(get_db)): 
+    book=db.query(Book).filter(Book.id==book_id).first()
+    if book is None:
+        raise HTTPException(status_code=404, detail="The book is not found")
+    db.delete(book)
+    db.commit()
+    return {"message":"The Book is deleted successfully"}
