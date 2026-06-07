@@ -1,4 +1,4 @@
-from pydantic import BaseModel 
+from pydantic import BaseModel , EmailStr
 from typing import Optional 
 
 class Book(BaseModel): 
@@ -24,5 +24,18 @@ class Borrow(BaseModel):
     borrow_date: str 
     return_date: Optional[str]=None 
     status: str 
+
+class UserCreate(BaseModel): 
+    email:EmailStr
+    password:str
+
+class UserLogin(BaseModel):
+    email:EmailStr
+    password:str 
+
+class Token(BaseModel): 
+    access_token:str
+    token_type:str
+
 
 

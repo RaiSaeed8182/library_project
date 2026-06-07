@@ -35,3 +35,10 @@ class Borrow(Base):
     borrow_date=Column(String)
     return_date=Column(String, nullable=True)
     status= Column(String)
+
+class User(Base): 
+    __tablename__="user"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
