@@ -4,8 +4,9 @@ from fastapi import APIRouter , HTTPException, Depends
 from sqlalchemy.orm import Session, query 
 from typing import Optional
 from database import get_db
-from models import Book
+from models import Book, User
 from schemas import Book as BookSchema 
+from auth import get_current_user
 
 
 route = APIRouter(
@@ -17,7 +18,7 @@ book_list =[]
 
 
 @route.post("/", status_code=201)
-async def create_book(new_book:BookSchema,db:Session=Depends(get_db)):
+async def create_book(new_book:BookSchema,db:Session=Depends(get_db),current_user: User = Depends(get_current_user)):
      book_db=Book(
         title=new_book.title,
         author=new_book.author,
@@ -50,7 +51,7 @@ async def get_any_book(book_id: int, db:Session=Depends(get_db)):
        return book
 
 @route.put("/{book_id}") 
-async def update_book(book_id: int, update_book:BookSchema, db:Session=Depends(get_db)): 
+async def update_book(book_id: int, update_book:BookSchema, db:Session=Depends(get_db),current_user:User=Depends(get_current_user)): 
    book= db.query(Book).filter(Book.id==book_id).first()
 
    if book is None : 
@@ -66,7 +67,7 @@ async def update_book(book_id: int, update_book:BookSchema, db:Session=Depends(g
    return {"message":"The Book is update","book":book}
 
 @route.delete("/{book_id}")
-async def delete_book(book_id : int, db:Session=Depends(get_db)): 
+async def delete_book(book_id : int, db:Session=Depends(get_db), current_user:User=Depends(get_current_user)): 
     book=db.query(Book).filter(Book.id==book_id).first()
     if book is None:
         raise HTTPException(status_code=404, detail="The book is not found")

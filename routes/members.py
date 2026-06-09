@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from database import get_db
-from models import Member                    # SQLAlchemy
+from database import get_db                 # SQLAlchemy
 from schemas import Member as MemberSchema   # Pydantic alias
+from models import Member, User
+from auth import get_current_user
 
 
 route = APIRouter(
@@ -13,7 +14,7 @@ route = APIRouter(
 members_list =[]
 
 @route.post("/", status_code=201)
-async def add_member(member:MemberSchema, db:Session=Depends(get_db)):
+async def add_member(member:MemberSchema, db:Session=Depends(get_db), current_user: User = Depends(get_current_user)):
       new_member=Member(
         name = member.name,
         email= member.email,
@@ -26,12 +27,12 @@ async def add_member(member:MemberSchema, db:Session=Depends(get_db)):
       return {"message":"The Member is add successfully","member":new_member}
 
 @route.get("/")
-async def get_data(db:Session=Depends(get_db)):
+async def get_data(db:Session=Depends(get_db), current_user: User = Depends(get_current_user)):
     member=db.query(Member).all()
     return member
 
 @route.get("/{member_id}")
-async def get_specific_data(member_id:int, db:Session=Depends(get_db)): 
+async def get_specific_data(member_id:int, db:Session=Depends(get_db), current_user: User = Depends(get_current_user)): 
       member = db.query(Member).filter(Member.id==member_id).first()
       if member is None:
              raise HTTPException(status_code=404, detail="Member  is not found")
@@ -41,7 +42,7 @@ async def get_specific_data(member_id:int, db:Session=Depends(get_db)):
 
 
 @route.put("/{member_id}")
-async def update_member(member_id: int , update_member: MemberSchema, db:Session=Depends(get_db)): 
+async def update_member(member_id: int , update_member: MemberSchema, db:Session=Depends(get_db), current_user: User = Depends(get_current_user)): 
     member= db.query(Member).filter(Member.id ==member_id).first()
     if member is None: 
           raise HTTPException(status_code=404, detail="Member not Found")
@@ -56,7 +57,7 @@ async def update_member(member_id: int , update_member: MemberSchema, db:Session
   
 
 @route.delete("/{member_id}")
-async def delete_member(member_id:int,db:Session=Depends(get_db)) : 
+async def delete_member(member_id:int,db:Session=Depends(get_db), current_user: User = Depends(get_current_user)) : 
     member=db.query(Member).filter(Member.id ==member_id ).first()
     if member is None:
          raise HTTPException (status_code=404, detail="The member  not found ")

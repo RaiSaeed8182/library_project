@@ -6,6 +6,8 @@ from schemas import Borrow as BorrowSchema
 from database import get_db
 from datetime import date 
 from typing import Optional
+from models import Book, Member, Borrow, User    
+from auth import get_current_user               
 
 
 # app.include_router(borrows.route)              ← yeh comment
@@ -17,7 +19,7 @@ route= APIRouter(
 borrow_list=[]
  
 @route.post("/", status_code=201)
-async def create_borrow(new_borrow: BorrowSchema, db:Session=Depends(get_db)):
+async def create_borrow(new_borrow: BorrowSchema, db:Session=Depends(get_db),current_user:User=Depends(get_current_user)):
    book=db.query(Book).filter(Book.id == new_borrow.book_id).first()
    # Find book in database
    if book is None: 
@@ -45,7 +47,7 @@ async def create_borrow(new_borrow: BorrowSchema, db:Session=Depends(get_db)):
    db.refresh(new_borrow_db)
    return {"message": "Book borrowed successfully", "borrow": new_borrow_db}
 @route.get("/")
-async def get_borrows(member_id: Optional[int]=None, status: Optional[str]=None, db:Session=Depends(get_db)): 
+async def get_borrows(member_id: Optional[int]=None, status: Optional[str]=None, db:Session=Depends(get_db),current_user:User=Depends(get_current_user)): 
     query=db.query(Borrow)
     if member_id is not None: 
         query=query.filter(Borrow.member_id==member_id)
@@ -56,7 +58,7 @@ async def get_borrows(member_id: Optional[int]=None, status: Optional[str]=None,
       
 
 @route.get("/{borrow_id}")
-async def get_borrow_by_id(borrow_id:int, db:Session=Depends(get_db)):
+async def get_borrow_by_id(borrow_id:int, db:Session=Depends(get_db),current_user:User=Depends(get_current_user)):
      borrow=db.query(Borrow).filter(Borrow.id ==borrow_id).first()
      if borrow is None: 
          raise HTTPException (status_code=404, detail="The borrow id is not found")
@@ -64,7 +66,7 @@ async def get_borrow_by_id(borrow_id:int, db:Session=Depends(get_db)):
 
 ## Return Book 
 @route.put("/{borrow_id}/return")
-async def return_book(borrow_id:int,db:Session=Depends(get_db)): 
+async def return_book(borrow_id:int,db:Session=Depends(get_db),current_user:User=Depends(get_current_user)): 
 
     borrow_update=db.query(Borrow).filter(Borrow.id ==borrow_id).first()
     if borrow_update is None:
