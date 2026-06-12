@@ -65,13 +65,22 @@ def get_current_user(token:str=Depends(oauth2_scheme),db:Session=Depends(get_db)
 )
 
   payload=decode_access_token(token)
-  if payload in None: 
+  if payload is None: 
     raise credentials_exception 
   user_id = payload.get("user_id")
   if user_id is None: 
     raise credentials_exception
-  user= db.query(User).filter(User.id==user.id).first()
+  user= db.query(User).filter(User.id==user_id).first()
   if user is None: 
     raise credentials_exception
   
   return user 
+
+
+def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return current_user
