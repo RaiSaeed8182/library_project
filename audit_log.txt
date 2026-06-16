@@ -1,0 +1,1 @@
+[2026-06-12T10:41:43.276076] New signup: id=4, email=test@library.com

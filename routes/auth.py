@@ -8,31 +8,55 @@ from models import User
 from schemas import UserCreate, Token 
 from auth import hash_password, verify_password, create_access_token
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import BackgroundTasks
+from audit_log import log_user_signup
 
 route = APIRouter(
     prefix="/auth",
     tags=["Authentication"]
 )
 
-@route.post("/Signup", status_code=201)
-async def signup (user_data:UserCreate, db:Session=Depends(get_db)): 
-    existing_user= db.query(User).filter(User.email==user_data.email)
-    if existing_user is None: 
-        raise HTTPException(status_code=404, detail="Email is already register")
-    hashed_pwd= hash_password(user_data.password)
-
-    new_user=User(
+@route.post("/signup", status_code=201)
+async def signup(
+    user_data: UserCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    # Step 1: Email check (EXISTING)
+    existing_user = db.query(User).filter(User.email == user_data.email).first()
+    if existing_user is not None:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Step 2: Hash password (EXISTING)
+    hashed_pw = hash_password(user_data.password)
+    
+    # Step 3: Create user (EXISTING)
+    new_user = User(
         email=user_data.email,
-        hashed_password=hashed_pwd,
+        hashed_password=hashed_pw,
         role="user"
     )
-
+    
+    # Step 4: Save to database (EXISTING)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-
-    return {"message":"User is registered Successfully","user":{"id":new_user.id,"email":new_user.email}}
-
+    
+    # Step 5: NEW! Schedule background task
+    background_tasks.add_task(
+        log_user_signup,
+        user_email=new_user.email,
+        user_id=new_user.id
+    )
+    
+    # Step 6: Return response (EXISTING)
+    return {
+        "message": "User registered successfully",
+        "user": {
+            "id": new_user.id,
+            "email": new_user.email
+        }
+    }
 
 @route.post("/login", response_model=Token)
 async def login(
