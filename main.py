@@ -1,11 +1,24 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware     # ← NEW
 from routes import books, members, borrows, auth
 from exceptions import BookNotFoundException
-from fastapi.responses import JSONResponse
 
 
 app = FastAPI(title="Library Management API")
-# Global Exception Handler — BookNotFoundException
+
+
+# NEW: CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# Existing: Global Exception Handler
 @app.exception_handler(BookNotFoundException)
 async def book_not_found_handler(request: Request, exc: BookNotFoundException):
     return JSONResponse(
@@ -20,11 +33,11 @@ async def book_not_found_handler(request: Request, exc: BookNotFoundException):
     )
 
 
-# Connect all routers
+# Routers
 app.include_router(books.route)
 app.include_router(members.route)
 app.include_router(borrows.route)
-app.include_router(auth.route)  
+app.include_router(auth.route)
 
 
 @app.get("/")
