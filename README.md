@@ -1,46 +1,52 @@
 # 📚 Library Management API
 
-A production-grade REST API for managing books, members, and borrowing operations in a library system. Built with FastAPI and PostgreSQL.
+A production-grade REST API for managing books, members, and borrowing operations in a library system. Built with FastAPI, PostgreSQL, JWT Authentication, and comprehensive testing.
 
 ## 🚀 Tech Stack
 
 - **Backend:** FastAPI (Python 3.11+)
 - **Database:** PostgreSQL
 - **ORM:** SQLAlchemy
+- **Authentication:** JWT (python-jose + bcrypt)
 - **Validation:** Pydantic
+- **Testing:** pytest + httpx
 - **Server:** Uvicorn
 
 ## ✨ Features
 
 - 14 RESTful API endpoints
+- JWT-based authentication with bcrypt password hashing
+- Role-Based Access Control (RBAC) — Admin/User roles
+- Background tasks for audit logging
+- Custom exception handlers with structured error responses
 - PostgreSQL database integration with SQLAlchemy ORM
-- Pydantic data validation
-- Business logic for borrowing/returning books
-- Atomic transactions for data consistency
-- Cross-resource queries (books ↔ members ↔ borrows)
+- Comprehensive pytest test suite
+- Pydantic data validation with EmailStr
 - Auto-generated API documentation (Swagger UI)
+
+## 🔐 Authentication
+
+- `POST /auth/signup` — Register new user
+- `POST /auth/login` — Login and receive JWT token (OAuth2 password flow)
+
+**Protected endpoints** require `Authorization: Bearer <token>` header.
+
+**Admin-only endpoints** (POST/PUT/DELETE on books) require admin role.
 
 ## 📋 API Endpoints
 
 ### Books (`/books`)
-- `POST /books/` — Add new book
-- `GET /books/` — Get all books (filters: category, available_only)
-- `GET /books/{id}` — Get specific book
-- `PUT /books/{id}` — Update book
-- `DELETE /books/{id}` — Delete book
+- `POST /books/` — 🔒 Admin: Add new book
+- `GET /books/` — 🔓 Public: Get all books (filters: category, available_only)
+- `GET /books/{id}` — 🔓 Public: Get specific book
+- `PUT /books/{id}` — 🔒 Admin: Update book
+- `DELETE /books/{id}` — 🔒 Admin: Delete book
 
 ### Members (`/members`)
-- `POST /members/` — Register new member
-- `GET /members/` — Get all members
-- `GET /members/{id}` — Get specific member
-- `PUT /members/{id}` — Update member
-- `DELETE /members/{id}` — Delete member
+- All endpoints 🔒 Protected (privacy reasons)
 
 ### Borrows (`/borrows`)
-- `POST /borrows/` — Borrow a book
-- `GET /borrows/` — Get all borrows (filters: member_id, status)
-- `GET /borrows/{id}` — Get specific borrow
-- `PUT /borrows/{id}/return` — Return a book
+- All endpoints 🔒 Protected
 
 ## 🛠️ Installation
 
@@ -52,21 +58,34 @@ cd library_project
 # Create virtual environment
 python -m venv venv
 venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/Mac
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Setup PostgreSQL
-# Create database named 'library_db' in PostgreSQL
-# Update DATABASE_URL in database.py with your credentials
+# Create database 'library_db' with role column in user table
 
 # Run server
 uvicorn main:app --reload
 ```
 
-API will run at `http://127.0.0.1:8000`
+API: `http://127.0.0.1:8000`
+Docs: `http://127.0.0.1:8000/docs`
 
-Documentation: `http://127.0.0.1:8000/docs`
+## 🧪 Testing
+
+```bash
+# Run all tests
+pytest
+
+# Run with verbose output
+pytest -v
+```
+
+**Test suite:**
+- Root endpoint check
+- Authentication (wrong password)
+- Protected route (no token = 401)
+- Custom exception (404 with structured response)
 
 ## 🗂️ Project Structure
