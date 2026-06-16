@@ -7,6 +7,8 @@ from database import get_db
 from models import Book, User
 from schemas import Book as BookSchema 
 from auth import get_current_user,require_admin
+from exceptions import BookNotFoundException
+
 
 
 route = APIRouter(
@@ -47,7 +49,7 @@ async def get_book(category: Optional[str]=None,available_only:bool= False, db:S
 async def get_any_book(book_id: int, db:Session=Depends(get_db)):
        book=db.query(Book).filter(Book.id==book_id).first()
        if book is None: 
-            raise HTTPException( status_code = 404, detail="Book not found")
+            raise BookNotFoundException(book_id)
        return book
 
 @route.put("/{book_id}") 
@@ -55,7 +57,7 @@ async def update_book(book_id: int, update_book:BookSchema, db:Session=Depends(g
    book= db.query(Book).filter(Book.id==book_id).first()
 
    if book is None : 
-        raise HTTPException(status_code=404, detail="The Book does not found")
+        raise BookNotFoundException(book_id)
     
    book.title= update_book.title
    book.author= update_book.author
@@ -70,7 +72,7 @@ async def update_book(book_id: int, update_book:BookSchema, db:Session=Depends(g
 async def delete_book(book_id : int, db:Session=Depends(get_db), current_user:User=Depends(require_admin)): 
     book=db.query(Book).filter(Book.id==book_id).first()
     if book is None:
-        raise HTTPException(status_code=404, detail="The book is not found")
+       raise BookNotFoundException(book_id)
     db.delete(book)
     db.commit()
     return {"message":"The Book is deleted successfully"}
