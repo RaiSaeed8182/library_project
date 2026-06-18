@@ -10,6 +10,7 @@ from auth import hash_password, verify_password, create_access_token
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import BackgroundTasks
 from audit_log import log_user_signup
+from auth import get_current_user
 
 route = APIRouter(
     prefix="/auth",
@@ -79,3 +80,17 @@ async def login(
     
     access_token = create_access_token(data={"sub": user.email, "user_id": user.id})
     return {"access_token": access_token, "token_type": "bearer"}
+
+@route.get("/me")
+async def get_current_user_info(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Returns currently logged-in user's info.
+    Used by frontend to determine role and display.
+    """
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "role": current_user.role
+    }

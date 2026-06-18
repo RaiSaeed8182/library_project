@@ -1,1 +1,3 @@
 [2026-06-12T10:41:43.276076] New signup: id=4, email=test@library.com
+[2026-06-16T17:35:35.157990] New signup: id=5, email=newuser@library.com
+[2026-06-17T16:04:34.439944] New signup: id=6, email=saeed123@gmail.com

@@ -2,7 +2,6 @@ from pydantic import BaseModel , EmailStr
 from typing import Optional 
 
 class Book(BaseModel): 
-    id: int 
     title: str
     author: str 
     category: str 
@@ -10,20 +9,23 @@ class Book(BaseModel):
     available_copies: int
 
 
-class Member(BaseModel): 
-    id: int
-    name: str
-    email: str
-    phone: str
-    membership_type: str
 
-class Borrow(BaseModel): 
+
+class BorrowCreate(BaseModel):
+    book_id: int
+    member_id: int
+
+
+class Borrow(BaseModel):
     id: int
     book_id: int
-    member_id: int 
-    borrow_date: str 
-    return_date: Optional[str]=None 
-    status: str 
+    member_id: int
+    borrow_date: str
+    return_date: Optional[str] = None
+    status: str
+    
+    class Config:
+        from_attributes = True 
 
 class UserCreate(BaseModel): 
     email:EmailStr
@@ -37,5 +39,21 @@ class Token(BaseModel):
     access_token:str
     token_type:str
 
+class MemberCreate(BaseModel):
+    name: str
+    email: str
+    phone: str
+    membership_type: str
+
+
+class Member(BaseModel):
+    id: int
+    name: str
+    email: str
+    phone: str
+    membership_type: str
+    
+    class Config:
+        from_attributes = True
 
 

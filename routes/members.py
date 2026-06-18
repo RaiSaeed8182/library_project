@@ -4,7 +4,7 @@ from database import get_db                 # SQLAlchemy
 from schemas import Member as MemberSchema   # Pydantic alias
 from models import Member, User
 from auth import get_current_user
-
+from schemas import Member as MemberSchema,MemberCreate
 
 route = APIRouter(
     prefix="/members",
@@ -14,7 +14,7 @@ route = APIRouter(
 members_list =[]
 
 @route.post("/", status_code=201)
-async def add_member(member:MemberSchema, db:Session=Depends(get_db), current_user: User = Depends(get_current_user)):
+async def add_member(member:MemberCreate, db:Session=Depends(get_db), current_user: User = Depends(get_current_user)):
       new_member=Member(
         name = member.name,
         email= member.email,
@@ -42,7 +42,7 @@ async def get_specific_data(member_id:int, db:Session=Depends(get_db), current_u
 
 
 @route.put("/{member_id}")
-async def update_member(member_id: int , update_member: MemberSchema, db:Session=Depends(get_db), current_user: User = Depends(get_current_user)): 
+async def update_member(member_id: int , update_member: MemberCreate, db:Session=Depends(get_db), current_user: User = Depends(get_current_user)): 
     member= db.query(Member).filter(Member.id ==member_id).first()
     if member is None: 
           raise HTTPException(status_code=404, detail="Member not Found")
